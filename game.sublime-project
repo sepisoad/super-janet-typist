@@ -1,0 +1,20 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"debug.configurations":
+		[
+			{
+				"type": "native-debug", 
+				"request": "launch", 
+				"name": "my debug",
+				"program": "./engine"
+			},
+		]
+	}
+}

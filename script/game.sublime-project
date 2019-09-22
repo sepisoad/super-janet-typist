@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"file_exclude_patterns": [
+				"*.sublime-*",
+				"launch"
+			]
+		}
+	],	
+	"Run Task.tasks": [{
+    "name": "launch game",
+    "type": "shell",
+    "command": "./launch"
+  }]
+}
