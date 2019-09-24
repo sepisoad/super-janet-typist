@@ -1,3 +1,5 @@
 *.o
-*.sublime-workspace
+*.sublime-*
+script/FEEDBACK.md
+script/build
 engine
