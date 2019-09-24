@@ -4,6 +4,7 @@
 #  / ____/ /___/ ___ |/ / /___/ _, _/
 # /_/   /_____/_/  |_/_/_____/_/ |_|
 
+(import ../globals :as g)
 (import ../colors :as color)
 (import ../keys :as key)
 (import ./base :as base)
@@ -19,16 +20,18 @@
 (defn- do-input [self game]
   (when (not (nil? (self :target)))
     (var key (c/get-key-pressed))
-    (var char ((:get-child (game :word)) :value))    
+    (var letter (:get-child (game :word)))
+    (var char (letter :value))    
     (when (not (nil? char))
       (var ucode (c/u/str-to-code (string/ascii-upper char)))
       (var lcode (c/u/str-to-code (string/ascii-lower char)))
-      (when (and (not (= -1 key)) (or (= key ucode) (= key lcode)))
-        (var child (:get-child (game :word)))
-        (when (not (nil? child))
-          (set (child :typed?) true)
+      (if (and (not (= -1 key)) (or (= key ucode) (= key lcode)))
+        (do
+          (set (letter :typed?) true)
+          (set (game :scores) (+ (game :scores) 1))          
           (array/concat (game :objects) 
-            (bullet/spawn self child)))))))
+            (bullet/spawn self letter)))
+        (set (game :streaks) 0)))))
 
 #        __                            __      __
 #   ____/ /___        __  ______  ____/ /___ _/ /____
@@ -49,8 +52,12 @@
 # / /_/ / /_/ /_____/ /  /  __/ / / / /_/ /  __/ /
 # \__,_/\____/     /_/   \___/_/ /_/\__,_/\___/_/
 
-(defn- do-render [self game] 
-  (c/draw-rect (self :pos-x) (self :pos-y) (self :width) (self :height) (self :color)))
+(defn- do-render [self game]  
+  (c/draw-texture 
+    (self :janet)
+    (self :pos-x)
+    (self :pos-y)
+    color/pink))
 
 #               __        __                        __
 #    ________  / /_      / /_____ __________ ____  / /_
@@ -71,8 +78,8 @@
 # /_/            /____/
 
 (def- player
-  @{:width 20
-    :height 20
+  @{:width 16
+    :height 16
     :speed-x 5
     :last-fire 0
     :color color/maroon
@@ -95,4 +102,5 @@
     (table/clone player)
     @{:pos-x (- x (/ (player :width) 2))
       :pos-y y
+      :janet (c/load-texture g/janet-image)
       :target target}))

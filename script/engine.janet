@@ -8,17 +8,21 @@
 (import ./globals :as g)
 (import ./game :as game)
 
-(def engine (merge config @{}))
-
 (defn load-repository [path]
   (var data (slurp path))  
   (string/split "\n" data))
 
 (defn start []
-  (c/screen-start config)  
-  (set (engine :repository) (load-repository g/repository))
-  (set (engine :font) (c/load-font g/default-font g/default-font-size))
+  (var engine (merge config {}))
+
+  (set (engine :repository) (load-repository g/repository)) # TODO: move it to config  
+  (set (engine :window-width) g/window-width)
+  (set (engine :window-height) g/window-height)
+  (set (engine :window-title) g/window-title)
+  (set (engine :frames-per-second) g/frames-per-second)
   (set (engine :font-size) g/default-font-size)
-  (set (engine :font-spacing) 1)
+  (set (engine :font-spacing) g/default-font-spacing)
+  
+  (c/screen-start engine)
   (game/init engine)
   (c/screen-end))   

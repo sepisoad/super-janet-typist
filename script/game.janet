@@ -4,10 +4,12 @@
 # / /_/ / ___ |/ /  / / /___
 # \____/_/  |_/_/  /_/_____/
 
-(import ./config :prefix "")
+(import ./globals :as g)
 (import ./utils :as util)
 (import ./keys :as key)
 (import ./colors :as color)
+(import ./background :as background)
+(import ./hud :as hud)
 (import ./entities/word :as word)
 (import ./entities/player :as player)
 
@@ -22,8 +24,11 @@
 (var first-word nil)
 (var repo-len 0)
 (var game
-  @{:won? false
+  @{:won? false    
     :lost? false
+    :scores 0
+    :streaks 0
+    :hud-height 50
     :player nil
     :objects (array/new 1)
     :word nil})
@@ -99,14 +104,17 @@
 #  / / / / / / /_
 # /_/_/ /_/_/\__/
 
-(defn init [eng]  
+(defn init [eng]
   (set game (merge eng game))
+  (set (game :font) (c/load-font g/default-font g/default-font-size))
+  (set (game :background) (c/load-texture g/background-image))
+  (set (game :hud) (c/load-texture g/hud-image))
   (var objects (game :objects))    
   (set repo-len (length (game :repository)))
 
-  (var plyr (player/spawn (/ (game :window-width) 2) 0 nil))
+  (var plyr (player/spawn (/ (game :window-width) 2) 1000 nil))
   (set (game :player) plyr)
-  (set (plyr :pos-y) (- (game :window-height) (plyr :height)))
+  (set (plyr :pos-y) (- (game :window-height) (plyr :height) 9))
   
   (var time (c/get-time))
     
@@ -121,9 +129,11 @@
     (:do-update plyr game time)
     (each obj objects (:do-update obj game time))
 
-    (util/render            
-      (each obj objects (:do-render obj game))
-      (:do-render plyr game)))
+    (util/render
+      (background/do-render game)
+      (each obj objects (:do-render obj game))      
+      (:do-render plyr game)      
+      (hud/do-render game)))
 
   (when (game :won?)
     (while (not (c/is-key-pressed key/exit))

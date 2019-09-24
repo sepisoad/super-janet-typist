@@ -5,6 +5,7 @@
 # /_____/\____/_____/_____/_____/ /_/
 
 (import ./base :as base)
+(import ../globals :as g)
 (import ../colors :as color)
 
 #        __                            __      __
@@ -41,7 +42,11 @@
 
 (defn- do-render [self game]
   (when (not (self :delete?))
-    (c/draw-rect (self :pos-x) (self :pos-y) (self :width) (self :height) (self :color))))  
+    (c/draw-texture 
+      (self :gfx)
+      (self :pos-x)
+      (self :pos-y)
+      color/pink)))
 
 #     __          ____     __
 #    / /_  __  __/ / /__  / /_      ____ _
@@ -50,8 +55,8 @@
 # /_.___/\__,_/_/_/\___/\__/      \__,_/
 
 (def- bullet
-  @{:width 5
-    :height 5
+  @{:width 8
+    :height 8
     :speed-x 15
     :speed-y 20
     :shooter nil
@@ -67,11 +72,16 @@
 # /____/ .___/\__,_/ |__/|__/_/ /_/
 #     /_/
 
+(var gfx nil)
+
 (defn spawn [shooter target]
+  (when (nil? gfx)
+    (set gfx (c/load-texture g/bullet-image)))
   (merge 
     (base/get-ref) 
     (table/clone bullet)
     @{:shooter shooter 
       :target target
+      :gfx gfx
       :pos-x (+ (shooter :pos-x) (/ (shooter :width) 2))
       :pos-y (shooter :pos-y)}))

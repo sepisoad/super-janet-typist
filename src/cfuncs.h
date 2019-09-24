@@ -17,35 +17,38 @@ JanetAbstractType jt_font = // TODO: handle font memory deletion
 static Janet c_screen_start(int32_t argc, Janet *argv) {
   janet_fixarity(argc, 1);
 
-  const JanetKV *config = janet_getstruct(argv, 0);
+  JanetTable *config = janet_gettable(argv, 0);
   int window_width =
     janet_unwrap_integer(
-      janet_struct_get(config, 
+      janet_table_get(config, 
         janet_ckeywordv("window-width")));
   
   int window_height =
     janet_unwrap_integer(
-      janet_struct_get(config, 
+      janet_table_get(config, 
         janet_ckeywordv("window-height")));
 
   int frames_per_second =
     janet_unwrap_integer(
-      janet_struct_get(config, 
+      janet_table_get(config, 
         janet_ckeywordv("frames-per-second")));        
 
   const uint8_t *window_title = 
     janet_unwrap_string(
-      janet_struct_get(config, 
+      janet_table_get(config, 
         janet_ckeywordv("window-title")));                
   
   bool is_fullscreen = 
     janet_unwrap_boolean(
-      janet_struct_get(config, 
+      janet_table_get(config, 
         janet_ckeywordv("is-fullscreen?")));
-
-  (void) is_fullscreen;
-
+  
   InitWindow(window_width, window_height, (const char *)window_title);
+  
+  if (is_fullscreen) {
+    ToggleFullscreen(); 
+  }
+
   SetTargetFPS(frames_per_second);
   SetExitKey(KEY_F10);  
 
@@ -105,6 +108,30 @@ static Janet c_draw_text(int32_t argc, Janet *argv) {
   };
   
   DrawTextEx(*font, text, (Vector2){.x=x,.y=y}, size, spacing, color);
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_draw_texture(int32_t argc, Janet *argv) {  
+  janet_fixarity(argc, 4);
+  
+  Texture2D *texture = (Texture2D*) janet_getabstract(argv, 0, &jt_texture2d);  
+  int x = janet_getinteger(argv, 1);
+  int y = janet_getinteger(argv, 2);  
+  const JanetKV *color_kv = janet_getstruct(argv, 3);
+  Color color = (Color) {
+    .r = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("r"))),
+    .g = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("g"))),
+    .b = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("b"))),
+    .a = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("a"))),
+  };
+  
+  DrawTexture(
+    *texture, 
+    x,
+    y,
+    color);
   return janet_wrap_nil();
 }
 
@@ -322,6 +349,7 @@ void inject_engine_symbols(JanetTable *jenv) {
     {"c/begin-draw", c_begin_draw, ""},
     {"c/end-draw", c_end_draw, ""},
     {"c/draw-text", c_draw_text, ""},
+    {"c/draw-texture", c_draw_texture, ""},    
     {"c/draw-sprite", c_draw_sprite, ""},    
     {"c/draw-pixel", c_draw_pixel, ""},
     {"c/draw-rect", c_draw_rect, ""},
