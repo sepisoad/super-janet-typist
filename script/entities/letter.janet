@@ -16,7 +16,7 @@
 
 (defn- do-render [self game]
   (when (and (not (self :delete?)) (self :visible))
-    (if (self :hit?)
+    (if (self :typed?)
       (c/draw-text 
         (game :font) 
         (self :value) 
@@ -58,5 +58,5 @@
          (table/clone letter) 
          @{:pos-x x
            :pos-y y
-           :hit? false
+           :typed? false
            :value v}))

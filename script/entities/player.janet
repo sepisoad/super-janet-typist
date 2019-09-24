@@ -7,7 +7,7 @@
 (import ../colors :as color)
 (import ../keys :as key)
 (import ./base :as base)
-(import ./bullet-a :as bullet-a)
+(import ./bullet :as bullet)
 
 #        __            _                   __
 #   ____/ /___        (_)___  ____  __  __/ /_
@@ -18,24 +18,17 @@
 
 (defn- do-input [self game]
   (when (not (nil? (self :target)))
-    (let [key (c/get-key-pressed)
-          char ((:get-child (game :word)) :value)
-          ucode (c/u/str-to-code (string/ascii-upper char))
-          lcode (c/u/str-to-code (string/ascii-lower char))]      
-      (when (and 
-              (not (= -1 key)) 
-              (or 
-                (= key ucode) 
-                (= key lcode)))
-
+    (var key (c/get-key-pressed))
+    (var char ((:get-child (game :word)) :value))    
+    (when (not (nil? char))
+      (var ucode (c/u/str-to-code (string/ascii-upper char)))
+      (var lcode (c/u/str-to-code (string/ascii-lower char)))
+      (when (and (not (= -1 key)) (or (= key ucode) (= key lcode)))
         (var child (:get-child (game :word)))
-
         (when (not (nil? child))
-          # (debug/break)
-          (set (child :hit?) true)
-          # (debug/break)
+          (set (child :typed?) true)
           (array/concat (game :objects) 
-            (bullet-a/spawn self (game :word))))))))
+            (bullet/spawn self child)))))))
 
 #        __                            __      __
 #   ____/ /___        __  ______  ____/ /___ _/ /____

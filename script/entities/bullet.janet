@@ -1,9 +1,8 @@
-#     ____  __  ____    __    ____________   ___
-#    / __ / / / / /   / /   / ____/_  __/  /   |
-#   / __  / / / / /   / /   / __/   / /    / /| |
-#  / /_/ / /_/ / /___/ /___/ /___  / /    / ___ |
-# /_____/\____/_____/_____/_____/ /_/    /_/  |_|
-
+#     ____  __  ____    __    ____________
+#    / __ )/ / / / /   / /   / ____/_  __/
+#   / __  / / / / /   / /   / __/   / /
+#  / /_/ / /_/ / /___/ /___/ /___  / /
+# /_____/\____/_____/_____/_____/ /_/
 
 (import ./base :as base)
 (import ../colors :as color)
@@ -23,7 +22,7 @@
   (var dif-y (- tar-y (self :pos-y)))
   (var dist (math/sqrt (+ (math/pow dif-x 2) (math/pow dif-y 2))))
 
-  (if (> dist 15)
+  (if (> dist 10)
     (do
       (var dir-x (/ dif-x dist))
       (var dir-y (/ dif-y dist))
@@ -31,7 +30,7 @@
       (set (self :pos-x) (math/floor (+ (self :pos-x) (* dir-x (self :speed-x)))))
       (set (self :pos-y) (math/floor (+ (self :pos-y) (* dir-y (self :speed-y))))))  
     (do
-      (set (self :hit?) true)
+      (set ((self :target) :delete?) true)
       (set (self :delete?) true))))  
 
 #        __                                __
@@ -41,7 +40,7 @@
 # \__,_/\____/     /_/   \___/_/ /_/\__,_/\___/_/
 
 (defn- do-render [self game]
-  (when (not (self :hit?))
+  (when (not (self :delete?))
     (c/draw-rect (self :pos-x) (self :pos-y) (self :width) (self :height) (self :color))))  
 
 #     __          ____     __
@@ -50,9 +49,8 @@
 #  / /_/ / /_/ / / /  __/ /_/_____/ /_/ /
 # /_.___/\__,_/_/_/\___/\__/      \__,_/
 
-(def- bullet-a
-  @{:hit? false
-    :width 5
+(def- bullet
+  @{:width 5
     :height 5
     :speed-x 15
     :speed-y 20
@@ -72,7 +70,7 @@
 (defn spawn [shooter target]
   (merge 
     (base/get-ref) 
-    (table/clone bullet-a)
+    (table/clone bullet)
     @{:shooter shooter 
       :target target
       :pos-x (+ (shooter :pos-x) (/ (shooter :width) 2))

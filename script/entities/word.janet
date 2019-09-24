@@ -20,25 +20,44 @@
 
 (defn- do-update [self game time]
   (when (self :locked?)
-    (if (self :grow?)
-      (do
-        (set (self :width-ex) (+ (self :width-ex) (self :width-gr)))
-        (set (self :height-ex) (+ (self :height-ex) (self :height-gr))))
-      (do
-        (set (self :width-ex) (- (self :width-ex) (self :width-gr)))
-        (set (self :height-ex) (- (self :height-ex) (self :height-gr)))))
-    (when
-      (or
-        (>= (self :width-ex) (self :width-max))
-        (>= (self :height-ex) (self :height-max)))
-      (set (self :grow?) false))
-    (when
-      (or
-        (< (self :width-ex) (self :width))
-        (< (self :height-ex) (self :height)))
-      (set (self :grow?) true)))
+    (when (u/some? (fn [child] (not (child :typed?))) (self :children))      
+      (if (self :grow?)
+        (do
+          (set (self :width-ex) (+ (self :width-ex) (self :width-gr)))
+          (set (self :height-ex) (+ (self :height-ex) (self :height-gr))))
+        (do
+          (set (self :width-ex) (- (self :width-ex) (self :width-gr)))
+          (set (self :height-ex) (- (self :height-ex) (self :height-gr)))))
+      (when
+        (or
+          (>= (self :width-ex) (self :width-max))
+          (>= (self :height-ex) (self :height-max)))
+        (set (self :grow?) false))
+      (when
+        (or
+          (< (self :width-ex) (self :width))
+          (< (self :height-ex) (self :height)))
+        (set (self :grow?) true))))    
 
-  (when (not (self :produced))
+  (when 
+    (and 
+      (not (self :dead?)) 
+      (u/every? (fn [child] (child :typed?)) (self :children)))
+    (set (self :locked?) false)
+    (set (self :dead?) true))
+
+  (when (> (self :pos-y) (- (game :window-height) (self :height)))
+    (if (self :dead?)
+      (each child (self :children)
+        (set (self :delete?) true)
+        (set (child :delete?) true))
+      (set (game :lost?) true)))
+
+  (set (self :pos-y) (+ (self :pos-y) (self :speed-y)))
+  (each child (self :children)
+    (set (child :pos-y) (self :pos-y)))
+
+  (when (not (self :produced))    
     (set (self :produced) true)
     (var arr (u/split (self :letters)))
     (var idx 0)
@@ -46,18 +65,7 @@
       (array/push (self :children) (letter/spawn (+ (* 15 idx) (self :pos-x)) (self :pos-y) l))
       (++ idx))
     (each child (self :children)
-      (array/push (game :objects) child)))
-
-  (if (> (self :pos-y) (- (game :window-height) (self :height)))    
-    (each child (self :children)
-      # (set (game :lost?) true)
-      (set (self :delete?) true)
-      (set (child :visible) false)
-      (set (child :delete?) true))
-    (do            
-      (set (self :pos-y) (+ (self :pos-y) (self :speed-y)))
-      (each child (self :children)
-        (set (child :pos-y) (self :pos-y))))))
+      (array/push (game :objects) child))))
 
 #        __                                __
 #   ____/ /___        ________  ____  ____/ /__  _____
@@ -92,11 +100,11 @@
 # /____/
 
 (defn get-child [self]
-  (var idx (find-index (fn [child] (not (child :hit?))) (self :children)))
+  (var idx (find-index (fn [child] (not (child :typed?))) (self :children)))
   
   (if (number? idx)
     ((self :children) idx)
-    nil))
+    -1)) #### WTF WHY I ...
 
 #                           __
 #  _      ______  _________/ /
@@ -108,7 +116,11 @@
   @{:type :WORD
     :produced? false
     :speed-y 1
-    :locked? false    
+    :width-gr 2
+    :height-gr 1
+    :grow? true
+    :locked? false
+    :dead? false  
     :color color/red
     #
     :do-update do-update
@@ -131,18 +143,7 @@
       :height h
       :width-ex w
       :height-ex h
-      :width-gr 2
-      :height-gr 1
       :width-max (+ w 20)
-      :height-max (+ h 10)
-      :grow? true
+      :height-max (+ h 10)            
       :letters letters
       :children (array/new 1)}))
-
-# WIERD PROBLEM:
-# i used to use :children @[] for word object, but it would somehow get shared
-# between all word objects, finally using (array/new 1) the problem got fixed
-
-# wheneve i mistakenly use a value as function I get a verrrrry none helpful
-# error message e.g. when I used color/red as (color/red) it took me about
-# 15 mins to finally get it right

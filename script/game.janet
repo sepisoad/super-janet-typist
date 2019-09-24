@@ -11,7 +11,7 @@
 (import ./entities/word :as word)
 (import ./entities/player :as player)
 
-(var no-more? false)
+(var still-more? true)
 (var won? false)
 (var cleanup-tick 0)
 (var cleanup-time 1)
@@ -48,7 +48,7 @@
 (defn- do-update [tick]  
   (var objects (game :objects)) 
 
-  (when (not no-more?)
+  (when still-more?
     (when (> (- tick word-tick) word-time)
       (set word-tick tick)
 
@@ -65,16 +65,16 @@
       (when (>= (+ pos-x (size :x)) (game :window-width))
         (-= pos-x (size :x)))
 
-      (array/concat objects (word/spawn text pos-x -15 (size :x) (size :y)))
+      (array/concat objects (word/spawn text pos-x -15 (size :x) (size :y)))      
       (++ word-idx)
       (when (>= word-idx repo-len)
-        (set no-more? true))))
+        (set still-more? false))))
 
   (set first-word
     (find-index
       (fn [obj] 
         (and 
-          (not (obj :delete?)) 
+          (not (obj :dead?)) 
           (= (obj :type) :WORD)))
       objects))
 

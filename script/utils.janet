@@ -17,6 +17,29 @@
     ,;commands
     (c/end-draw)))
 
+#                             ___
+#   ___ _   _____  _______  _/__ \
+#  / _ \ | / / _ \/ ___/ / / // _/
+# /  __/ |/ /  __/ /  / /_/ //_/
+# \___/|___/\___/_/   \__, /(_)
+#                    /____/
+
+(defmacro every? [pred ind]
+  ~(if (and (indexed? ,ind) (not (empty? ,ind)))
+     (true? (reduce (fn [iv nv] (and iv nv)) true (map ,pred ,ind)))
+     false))
+
+#                             ___
+#    _________  ____ ___  ___/__ \
+#   / ___/ __ \/ __ `__ \/ _ \/ _/
+#  (__  ) /_/ / / / / / /  __/_/
+# /____/\____/_/ /_/ /_/\___(_)
+
+(defmacro some? [pred ind]
+  ~(if (and (indexed? ,ind) (not (empty? ,ind)))
+     (true? (reduce (fn [iv nv] (or iv nv)) false (map ,pred ,ind)))
+     false))
+
 #                            ____
 #    ____ ____  ____        / __/________ _____ ___  ___  _____
 #   / __ `/ _ \/ __ \______/ /_/ ___/ __ `/ __ `__ \/ _ \/ ___/
