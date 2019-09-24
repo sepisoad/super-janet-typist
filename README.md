@@ -13,3 +13,7 @@ you need to have raylib installed on your system
 type `make` 
 
 type `engine`
+
+## credits
+
+all the pixel arts are authored by [surt](http://uninhabitant.com/)
