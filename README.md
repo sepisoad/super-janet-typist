@@ -7,6 +7,7 @@ by [@sepisoad](https://twitter.com/sepisoad)
 ## screenshot(s)
 
 ![janet-screenshot-1](assets/screenshot-1.png)
+![janet-screenshot-2](assets/screenshot-2.png)
 
 ## how to build
 
