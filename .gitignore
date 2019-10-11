@@ -1,9 +1,10 @@
 *.o
 *.sublime*
 .vscode
+obj/
 script/FEEDBACK.md
 assets/gfx
 assets/music
 assets/sfx
 launch
-engine
+game
