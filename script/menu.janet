@@ -82,14 +82,14 @@
 	(when (nil? menu)
 		(set menu @{})
 		(set (menu :start?) false)
-		(set (menu :quit?) false)
-		(set (menu :info) (profile/load))
+		(set (menu :quit?) false)		
 		(set (menu :font) (c/load-font g/default-font g/default-font-size))
 		(set (menu :background) (c/load-texture g/background-image)))
 
   (var time 0) 
   
-  (while (not (menu :quit?))  
+  (while (not (menu :quit?))
+    (set (menu :info) (profile/load))     
 	  (while (and (not (menu :start?)) (not (menu :quit?)))
 	    (set time (c/get-time))
 	    (do-input menu)

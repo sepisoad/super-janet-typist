@@ -31,7 +31,7 @@
       (if (or (= key ucode) (= key lcode))
         (do
           (set (letter :typed?) true)
-          (set (game :score) (+ (game :score) 1))
+          (set (game :score) (+ 1 (game :score)))
           (set (game :streak) (+ 1 (game :streak)))
           (array/concat (game :objects) 
             (bullet/spawn self letter last?)))

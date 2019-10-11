@@ -158,6 +158,9 @@
       (:do-render plyr game)      
       (hud/do-render game)))
 
+  (when (> (game :streak) (game :best-streak))
+    (set (game :best-streak) (game :streak)))
+
   (profile/update (game :score) (game :best-streak))
 
   (when (game :won?)
