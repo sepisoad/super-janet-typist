@@ -4,6 +4,7 @@
 # / /_/ / ___ |/ /  / / /___
 # \____/_/  |_/_/  /_/_____/
 
+(import ./profile :as profile)
 (import ./globals :as g)
 (import ./utils :as util)
 (import ./keys :as key)
@@ -18,20 +19,13 @@
 (var cleanup-tick 0)
 (var cleanup-time 1)
 (var word-tick 0)
-(var word-time 1)
+(var word-time 2)
 (var word-idx 0)
 (var seed-flag true)
 (var first-word nil)
 (var repo-len 0)
-(var game
-  @{:won? false    
-    :lost? false
-    :scores 0
-    :streaks 0
-    :hud-height 50
-    :player nil
-    :objects (array/new 1)
-    :word nil})
+(var music nil)
+(var game @{})
 
 #        __            _                   __
 #   ____/ /___        (_)___  ____  __  __/ /_
@@ -50,7 +44,10 @@
 # \__,_/\____/      \__,_/ .___/\__,_/\__,_/\__/\___/
 #                       /_/
 
-(defn- do-update [tick]  
+(defn- do-update [tick]
+  (when (not (c/music-playing? music))
+    (c/play-music music))
+
   (var objects (game :objects)) 
 
   (when still-more?
@@ -105,6 +102,32 @@
 # /_/_/ /_/_/\__/
 
 (defn init [eng]
+  (when (nil? music)
+    (set music (c/load-music g/music)))
+
+  (set still-more? true)
+  (set won? false)
+  (set cleanup-tick 0)
+  (set cleanup-time 1)
+  (set word-tick 0)
+  (set word-time 2)
+  (set word-idx 0)
+  (set seed-flag true)
+  (set first-word nil)
+  (set repo-len 0)  
+  (set game @{})
+
+  (set game
+   @{:won? false    
+     :lost? false
+     :score 0
+     :streak 0
+     :best-streak 0
+     :hud-height 50
+     :player nil
+     :objects (array/new 1)
+     :word nil})
+
   (set game (merge eng game))
   (set (game :font) (c/load-font g/default-font g/default-font-size))
   (set (game :background) (c/load-texture g/background-image))
@@ -135,13 +158,22 @@
       (:do-render plyr game)      
       (hud/do-render game)))
 
+  (profile/update (game :score) (game :best-streak))
+
   (when (game :won?)
-    (while (not (c/is-key-pressed key/exit))
+    (while (not (c/is-key-released key/select))
       (util/render            
-        (c/draw-text (game :font) "you win" 100 100 (game :font-size) 1 color/white))))
+        (c/draw-text (game :font) "You Win" 140 100 20 1 color/red))))
 
   (when (game :lost?)
-    (while (not (c/is-key-pressed key/exit))
-      (util/render            
-        (c/draw-text (game :font) "you lost" 100 100 (game :font-size) 1 color/maroon)))))
+    (while (not (c/is-key-released key/select))
+      (when (not (c/music-playing? music))
+        (c/play-music music))
+      (util/render
+        (c/draw-text (game :font) "You Lost" 140 100 20 1 color/red)
+        (c/draw-text (game :font) "You Scored: " 40 400 20 1 color/light-gray)
+        (c/draw-text (game :font) (string (game :score)) 60 420 20 1 color/gold)
+        (c/draw-text (game :font) "Your best Streak: " 40 440 20 1 color/light-gray)
+        (c/draw-text (game :font) (string (game :best-streak)) 60 460 20 1 color/gold)
+        (c/draw-text (game :font) "press enter to continue" 40 600 20 1 color/sky-blue)))))
       

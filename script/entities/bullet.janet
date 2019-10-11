@@ -7,7 +7,8 @@
 (import ./base :as base)
 (import ../globals :as g)
 (import ../colors :as color)
-
+(import ./letter-explosion :as letter-explosion)
+(import ./word-explosion :as word-explosion)
 #        __                            __      __
 #   ____/ /___        __  ______  ____/ /___ _/ /____
 #  / __  / __ \______/ / / / __ \/ __  / __ `/ __/ _ \
@@ -21,7 +22,7 @@
   
   (var dif-x (- tar-x (self :pos-x)))
   (var dif-y (- tar-y (self :pos-y)))
-  (var dist (math/sqrt (+ (math/pow dif-x 2) (math/pow dif-y 2))))
+  (var dist (math/sqrt (+ (math/pow dif-x 2) (math/pow dif-y 2))))  
 
   (if (> dist 10)
     (do
@@ -30,9 +31,16 @@
       
       (set (self :pos-x) (math/floor (+ (self :pos-x) (* dir-x (self :speed-x)))))
       (set (self :pos-y) (math/floor (+ (self :pos-y) (* dir-y (self :speed-y))))))  
-    (do
+    (do      
+      (when (not (self :exploaded?))
+        (set (self :exploaded?) true)        
+        (array/concat (game :objects)
+          (if (self :last?)
+            (word-explosion/spawn (self :target))
+            (letter-explosion/spawn (self :target)))))
+
       (set ((self :target) :delete?) true)
-      (set (self :delete?) true))))  
+      (set (self :delete?) true))))
 
 #        __                                __
 #   ____/ /___        ________  ____  ____/ /__  _____
@@ -61,6 +69,7 @@
     :speed-y 20
     :shooter nil
     :target nil
+    :exploaded? false
     :color color/green
     #
     :do-update do-update
@@ -73,15 +82,22 @@
 #     /_/
 
 (var gfx nil)
+(var sfx nil)
 
-(defn spawn [shooter target]
+(defn spawn [shooter target last?]
   (when (nil? gfx)
     (set gfx (c/load-texture g/bullet-image)))
+  (when (nil? sfx)
+    (set sfx (c/load-sound g/bullet-wave)))
+
+  (c/play-sound sfx)
+
   (merge 
     (base/get-ref) 
     (table/clone bullet)
     @{:shooter shooter 
       :target target
-      :gfx gfx
+      :last? last?
+      :gfx gfx      
       :pos-x (+ (shooter :pos-x) (/ (shooter :width) 2))
       :pos-y (shooter :pos-y)}))

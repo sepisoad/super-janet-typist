@@ -26,4 +26,20 @@
     (game :hud)
     0
     0
-    color/gray))
+    color/gray)
+	(c/draw-text 
+	  (game :font) 
+	  (string/format "score: %d" (game :score))
+	  35
+	  10
+	  20
+	  1
+	  color/white)
+	(c/draw-text 
+	  (game :font) 
+	  (string/format "streak: %d" (game :streak))
+	  210
+	  10
+	  20
+	  1
+	  color/white))

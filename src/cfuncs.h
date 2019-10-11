@@ -3,14 +3,20 @@
 
 //==============================================================================
 
-JanetAbstractType jt_image = // TODO: handle image memory deletion
-    {"jt/image", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+JanetAbstractType jt_image =
+  {"jt/image", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-JanetAbstractType jt_texture2d = // TODO: handle texture memory deletion
-    {"jt/texture2d", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+JanetAbstractType jt_texture2d =
+  {"jt/texture2d", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-JanetAbstractType jt_font = // TODO: handle font memory deletion
-    {"jt/font", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+JanetAbstractType jt_font =
+  {"jt/font", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+JanetAbstractType jt_wave =
+  {"jt/wave", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+JanetAbstractType jt_sound =
+  {"jt/sound", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 //==============================================================================
 
@@ -44,6 +50,7 @@ static Janet c_screen_start(int32_t argc, Janet *argv) {
         janet_ckeywordv("is-fullscreen?")));
   
   InitWindow(window_width, window_height, (const char *)window_title);
+  InitAudioDevice();
   
   if (is_fullscreen) {
     ToggleFullscreen(); 
@@ -59,6 +66,7 @@ static Janet c_screen_start(int32_t argc, Janet *argv) {
 
 static Janet c_screen_end(int32_t argc, Janet *argv) {  
   janet_fixarity(argc, 0);
+  CloseAudioDevice();
   CloseWindow();
   return janet_wrap_true();
 }
@@ -138,11 +146,12 @@ static Janet c_draw_texture(int32_t argc, Janet *argv) {
 //==============================================================================
 
 static Janet c_draw_sprite(int32_t argc, Janet *argv) {  
-  janet_fixarity(argc, 3);
+  janet_fixarity(argc, 4);
   
   Texture2D *texture = (Texture2D*) janet_getabstract(argv, 0, &jt_texture2d);  
   const JanetKV *jrect = janet_getstruct(argv, 1);
   const JanetKV *jpos = janet_getstruct(argv, 2);
+  const JanetKV *color_kv = janet_getstruct(argv, 3);
 
   Rectangle rect = (Rectangle) {
     .x = janet_unwrap_integer(janet_struct_get(jrect, janet_ckeywordv("x"))),
@@ -155,12 +164,67 @@ static Janet c_draw_sprite(int32_t argc, Janet *argv) {
     .x = janet_unwrap_integer(janet_struct_get(jpos, janet_ckeywordv("x"))),
     .y = janet_unwrap_integer(janet_struct_get(jpos, janet_ckeywordv("y"))),
   };
+
+  Color color = (Color) {
+    .r = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("r"))),
+    .g = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("g"))),
+    .b = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("b"))),
+    .a = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("a"))),
+  };
   
   DrawTextureRec(
     *texture, 
     rect,
     pos,
-    LIGHTGRAY);
+    color);
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_draw_sprite_ex(int32_t argc, Janet *argv) {  
+  janet_fixarity(argc, 6);
+  
+  Texture2D *texture = (Texture2D*) janet_getabstract(argv, 0, &jt_texture2d);  
+  const JanetKV *jrect_src = janet_getstruct(argv, 1);
+  const JanetKV *jrect_dst = janet_getstruct(argv, 2);
+  const JanetKV *jorigin = janet_getstruct(argv, 3);
+  const double rotation = janet_getnumber(argv, 4);
+  const JanetKV *color_kv = janet_getstruct(argv, 5);
+
+  Rectangle rect_src = (Rectangle) {
+    .x = janet_unwrap_integer(janet_struct_get(jrect_src, janet_ckeywordv("x"))),
+    .y = janet_unwrap_integer(janet_struct_get(jrect_src, janet_ckeywordv("y"))),
+    .width = janet_unwrap_integer(janet_struct_get(jrect_src, janet_ckeywordv("w"))),
+    .height = janet_unwrap_integer(janet_struct_get(jrect_src, janet_ckeywordv("h")))
+  };
+
+  Rectangle rect_dst = (Rectangle) {
+    .x = janet_unwrap_integer(janet_struct_get(jrect_dst, janet_ckeywordv("x"))),
+    .y = janet_unwrap_integer(janet_struct_get(jrect_dst, janet_ckeywordv("y"))),
+    .width = janet_unwrap_integer(janet_struct_get(jrect_dst, janet_ckeywordv("w"))),
+    .height = janet_unwrap_integer(janet_struct_get(jrect_dst, janet_ckeywordv("h")))
+  };
+
+  Vector2 origin = (Vector2) {
+    .x = janet_unwrap_integer(janet_struct_get(jorigin, janet_ckeywordv("x"))),
+    .y = janet_unwrap_integer(janet_struct_get(jorigin, janet_ckeywordv("y"))),
+  };
+
+  Color color = (Color) {
+    .r = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("r"))),
+    .g = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("g"))),
+    .b = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("b"))),
+    .a = janet_unwrap_integer(janet_struct_get(color_kv, janet_ckeywordv("a"))),
+  };
+  
+  DrawTexturePro(
+    *texture, 
+    rect_src,
+    rect_dst,
+    origin,
+    rotation,
+    color);
   return janet_wrap_nil();
 }
 
@@ -233,6 +297,19 @@ static Janet c_load_image(int32_t argc, Janet *argv) {
 
 //==============================================================================
 
+static Janet c_load_sprite(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  const char *path = janet_getcstring(argv, 0);
+
+  Image image = LoadImage(path);
+  Texture2D *texture = janet_abstract(&jt_texture2d, sizeof(Texture2D));
+  *texture = LoadTextureFromImage(image);
+  return janet_wrap_abstract(texture);
+}
+
+//==============================================================================
+
 static Janet c_load_texture(int32_t argc, Janet *argv) {    
   janet_fixarity(argc, 1);
 
@@ -244,15 +321,89 @@ static Janet c_load_texture(int32_t argc, Janet *argv) {
 
 //==============================================================================
 
-static Janet c_load_sprite(int32_t argc, Janet *argv) {    
+static Janet c_load_sound(int32_t argc, Janet *argv) {    
   janet_fixarity(argc, 1);
 
   const char *path = janet_getcstring(argv, 0);
+  Sound *sound = janet_abstract(&jt_sound, sizeof(Sound));
+  *sound = LoadSoundFromWave(LoadWave(path));
+  return janet_wrap_abstract(sound);
+}
 
-  Image image = LoadImage(path);
-  Texture2D *texture = janet_abstract(&jt_texture2d, sizeof(Texture2D));
-  *texture = LoadTextureFromImage(image);
-  return janet_wrap_abstract(texture);
+//==============================================================================
+
+static Janet c_play_sound(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  PlaySound(*sound);
+  
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_load_music(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  const char *path = janet_getcstring(argv, 0);
+  Sound *sound = janet_abstract(&jt_sound, sizeof(Sound));
+  *sound = LoadSound(path);
+  return janet_wrap_abstract(sound);
+}
+
+//==============================================================================
+
+static Janet c_play_music(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  PlaySound(*sound);
+  
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_pause_music(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  PauseSound(*sound);
+  
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_resume_music(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  ResumeSound(*sound);
+  
+  return janet_wrap_nil();
+}
+
+//==============================================================================
+
+static Janet c_is_music_playing(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  
+  return janet_wrap_boolean(IsSoundPlaying(*sound));
+}
+
+//==============================================================================
+
+static Janet c_stop_music(int32_t argc, Janet *argv) {    
+  janet_fixarity(argc, 1);
+
+  Sound *sound = (Sound*) janet_getabstract(argv, 0, &jt_sound);
+  StopSound(*sound);
+  
+  return janet_wrap_nil();
 }
 
 //==============================================================================
@@ -351,12 +502,21 @@ void inject_engine_symbols(JanetTable *jenv) {
     {"c/draw-text", c_draw_text, ""},
     {"c/draw-texture", c_draw_texture, ""},    
     {"c/draw-sprite", c_draw_sprite, ""},    
+    {"c/draw-sprite-ex", c_draw_sprite_ex, ""},    
     {"c/draw-pixel", c_draw_pixel, ""},
     {"c/draw-rect", c_draw_rect, ""},
     {"c/draw-rect-lines", c_draw_rect_lines, ""},    
     {"c/load-image", c_load_image, ""},
     {"c/load-sprite", c_load_sprite, ""},    
     {"c/load-texture", c_load_texture, ""},
+    {"c/load-sound", c_load_sound, ""},    
+    {"c/play-sound", c_play_sound, ""},
+    {"c/load-music", c_load_music, ""},
+    {"c/play-music", c_play_music, ""},
+    {"c/pause-music", c_pause_music, ""},
+    {"c/resume-music", c_resume_music, ""},
+    {"c/music-playing?", c_is_music_playing, ""},    
+    {"c/stop-music", c_stop_music, ""},
     {"c/is-key-pressed", c_is_key_pressed, ""},
     {"c/is-key-down", c_is_key_down, ""},
     {"c/is-key-released", c_is_key_released, ""},

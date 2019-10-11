@@ -76,3 +76,38 @@
     (array/push res (string/slice str idx (+ idx 1)))
     (++ idx))
   res)
+
+#                          __                      _       __
+#    _________ _____  ____/ /___  ____ ___        (_)___  / /_
+#   / ___/ __ `/ __ \/ __  / __ \/ __ `__ \______/ / __ \/ __/
+#  / /  / /_/ / / / / /_/ / /_/ / / / / / /_____/ / / / / /_
+# /_/   \__,_/_/ /_/\__,_/\____/_/ /_/ /_/     /_/_/ /_/\__/
+
+(defn random-int [num]
+ (math/floor (* num (math/random))))
+
+#          __          __________
+#    _____/ /_  __  __/ __/ __/ /__
+#   / ___/ __ \/ / / / /_/ /_/ / _ \
+#  (__  ) / / / /_/ / __/ __/ /  __/
+# /____/_/ /_/\__,_/_/ /_/ /_/\___/
+
+(defn shuffle [input]   
+  (when (not (indexed? input))
+    (error "input value must be an array or tuple"))
+  (var occupied 0)
+  (var array-length (length input))
+  (var index-array (array/new array-length))
+ 
+  (math/seedrandom (os/time))
+
+  (var index (random-int array-length))
+  (while (not (>= occupied array-length))          
+    (while (not (nil? (index-array index)))
+      (set index (random-int array-length)))
+    (set (index-array index) (input occupied))
+    (set occupied (+ 1 occupied)))
+
+  (if (array? input)  
+   index-array
+   (tuple ;index-array)))

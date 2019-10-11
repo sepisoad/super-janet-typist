@@ -9,6 +9,7 @@
 (import ../colors :as color)
 (import ../utils :as u)
 
+
 (def resize-tick 0)
 
 #        __                            __      __
@@ -45,6 +46,7 @@
       (u/every? (fn [child] (child :typed?)) (self :children)))
     (set (self :locked?) false)
     (set (self :dead?) true))
+  
 
   (when (> (self :pos-y) (- (game :window-height) (self :height)))
     (if (self :dead?)
@@ -106,6 +108,17 @@
     ((self :children) idx)
     -1)) #### WTF WHY I ...
 
+
+(defn last? [self]
+  (var idx (find-index (fn [child] (not (child :typed?))) (self :children)))
+  
+  (if 
+    (or
+      (nil? idx)
+      (= (+ 1 idx) (length (self :letters))))
+    true
+    false))
+
 #                           __
 #  _      ______  _________/ /
 # | | /| / / __ \/ ___/ __  /
@@ -125,7 +138,8 @@
     #
     :do-update do-update
     :do-render do-render
-    :get-child get-child})
+    :get-child get-child
+    :last? last?})
 
 #    _________  ____ __      ______
 #   / ___/ __ \/ __ `/ | /| / / __ \
@@ -143,7 +157,7 @@
       :height h
       :width-ex w
       :height-ex h
-      :width-max (+ w 20)
+      :width-max (+ w 10)
       :height-max (+ h 10)            
       :letters letters
       :children (array/new 1)}))

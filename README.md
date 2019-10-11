@@ -2,6 +2,8 @@
 
 a short typing game made with janet lisp
 
+by [@sepisoad](https://twitter.com/sepisoad)
+
 ## screenshot(s)
 
 ![janet-screenshot-1](assets/screenshot-1.png)

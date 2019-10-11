@@ -10,6 +10,8 @@
 (import ./base :as base)
 (import ./bullet :as bullet)
 
+(var wrong-letter-sfx nil)
+
 #        __            _                   __
 #   ____/ /___        (_)___  ____  __  __/ /_
 #  / __  / __ \______/ / __ \/ __ \/ / / / __/
@@ -21,17 +23,24 @@
   (when (not (nil? (self :target)))
     (var key (c/get-key-pressed))
     (var letter (:get-child (game :word)))
+    (var last? (:last? (game :word)))
     (var char (letter :value))    
-    (when (not (nil? char))
+    (when (and (not (nil? char)) (not (= -1 key)))
       (var ucode (c/u/str-to-code (string/ascii-upper char)))
       (var lcode (c/u/str-to-code (string/ascii-lower char)))
-      (if (and (not (= -1 key)) (or (= key ucode) (= key lcode)))
+      (if (or (= key ucode) (= key lcode))
         (do
           (set (letter :typed?) true)
-          (set (game :scores) (+ (game :scores) 1))          
+          (set (game :score) (+ (game :score) 1))
+          (set (game :streak) (+ 1 (game :streak)))
           (array/concat (game :objects) 
-            (bullet/spawn self letter)))
-        (set (game :streaks) 0)))))
+            (bullet/spawn self letter last?)))
+
+        (do 
+          (c/play-sound wrong-letter-sfx)
+          (when (> (game :streak) (game :best-streak))
+            (set (game :best-streak) (game :streak)))
+          (set (game :streak) 0))))))
 
 #        __                            __      __
 #   ____/ /___        __  ______  ____/ /___ _/ /____
@@ -97,6 +106,8 @@
 #     /_/
 
 (defn spawn [x y target]
+  (when (nil? wrong-letter-sfx)
+    (set wrong-letter-sfx (c/load-sound g/wrong-letter-wave)))
   (merge 
     (base/get-ref) 
     (table/clone player)

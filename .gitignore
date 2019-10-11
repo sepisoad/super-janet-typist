@@ -1,5 +1,9 @@
 *.o
-*.sublime-*
+*.sublime*
+.vscode
 script/FEEDBACK.md
-script/build
+assets/gfx
+assets/music
+assets/sfx
+launch
 engine

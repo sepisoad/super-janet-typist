@@ -6,11 +6,12 @@
 
 (import ./config :prefix "")
 (import ./globals :as g)
-(import ./game :as game)
+(import ./menu :as menu)
+(import ./utils :as u)
 
 (defn load-repository [path]
   (var data (slurp path))  
-  (string/split "\n" data))
+  (u/shuffle (string/split "\n" data)))
 
 (defn start []
   (var engine (merge config {}))
@@ -24,5 +25,5 @@
   (set (engine :font-spacing) g/default-font-spacing)
   
   (c/screen-start engine)
-  (game/init engine)
+  (menu/init engine)
   (c/screen-end))   
